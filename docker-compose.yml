@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  
+  postgres-master:
+    image: docker.io/bitnami/postgresql:13.4.0
+    ports:
+      - '5440:5432'
+    volumes:
+      # - 'postgresql_data:/bitnami/postgresql'
+      - 'c:/ams/postgresql/master:/bitnami/postgresql'
+      - 'c:/ams/postgresql/master_entrypoint-1:/docker-entrypoint-initdb.d'
+      - 'c:/ams/postgresql/master_entrypoint-2:/docker-entrypoint-preinitdb.d'
+    restart: always
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master 
+      - POSTGRESQL_USERNAME=hanla 
+      - POSTGRESQL_PASSWORD=hanla 
+      - POSTGRESQL_DATABASE=dynamic_a 
+      - POSTGRESQL_REPLICATION_USER=hanlarepl 
+      - POSTGRESQL_REPLICATION_PASSWORD=hanlarepl 
+  postgresql-slave:
+    image: docker.io/bitnami/postgresql:13.4.0
+    ports:
+      - '5441:5432'
+    volumes:
+      - 'c:/ams/postgresql/slave:/bitnami/postgresql'
+      - 'c:/ams/postgresql/slave_entrypoint-1:/docker-entrypoint-initdb.d'
+      - 'c:/ams/postgresql/slave_entrypoint-2:/docker-entrypoint-preinitdb.d'
+    restart: always
+    depends_on: 
+      - postgres-master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave 
+      - POSTGRESQL_USERNAME=hanla 
+      - POSTGRESQL_PASSWORD=hanla 
+      - POSTGRESQL_MASTER_HOST=172.17.0.1 
+      - POSTGRESQL_MASTER_PORT_NUMBER=5440 
+      - POSTGRESQL_REPLICATION_USER=hanlarepl 
+      - POSTGRESQL_REPLICATION_PASSWORD=hanlarepl
+# volumes:
+#   postgresql_data:
+#     driver: local
+
+    #도커 볼륨 백업
+    #docker run --volumes-from postgres2_postgres-master_1 -v c:/backup:/backup ubuntu tar cvf /backup/backup.tar /bitnami/postgresql
+    #docker run --volumes-from postgres2_postgres-master_1 --name volumes_backup -v c:/backup:/backup ubuntu tar cvf /backup/backup.tar /bitnami/postgresql 
+    #도커 볼륨 복원
+    #docker run --rm --volumes-from dbstore2 -v $(pwd):/backup ubuntu bash -c "cd /dbdata && tar xvf /backup/backup.tar --strip 1"
